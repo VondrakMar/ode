@@ -23,15 +23,24 @@ void print_row(double* my_row){
     printf("\n");
 }
 
+void flushed_print(double* arr_to_print, int usl){ 
+    system("clear");
+    print_row(arr_to_print);
+    fflush(stdout);
+    usleep(usl);
+}
 
-void take_step(size_t Nx, double r, double* u, double* dummy_u){
-    for (size_t x = 1; x < Nx-1; x++){ // u[0] and u[WIDTH] are boundary conditions, which are not changed
-        dummy_u[x] = u[x] + r * (u[x+1] - 2*u[x]+u[x-1]);
-    }
-    for (size_t x = 1; x < Nx; x++){
-        u[x] = dummy_u[x];
+void take_step(size_t Nx, double r, double* u){
+    // u[0] and u[WIDTH] are boundary conditions, which are not changed
+    double tmp_prv = u[0];
+    for (size_t x = 1; x < Nx-1; x++){
+        double tmp_u = u[x] + r * (u[x+1] - 2*u[x]+tmp_prv);
+        tmp_prv = u[x];
+        u[x] = tmp_u;
     }
 }
+
+
 
 int main(){
     double L = 1.0;
@@ -41,23 +50,13 @@ int main(){
     double dt = 0.01;
     double alpha = 0.01;
     double r = alpha* (dt/pow(dx,2.0));
-    /* printf("%lf %lf %lf\n",dx,dt,r); */
     double* u = (double*)malloc(WIDTH*sizeof(double));
-    double* dummy_u = (double*)malloc(WIDTH*sizeof(double));
     u[0] = 0.7;
     u[WIDTH-1] = 0.2;
-    dummy_u[0] = 0.7;
-    dummy_u[WIDTH-1] = 0.2;
     for (size_t t_step = 0; t_step < Nt ; t_step++){
-        take_step(Nx,r,u,dummy_u);
-        /*
-        system("clear");
-        print_row(u);
-        fflush(stdout);
-        usleep(10000);
-        */
+        take_step(Nx,r,u);
+        flushed_print(u, 10000);
     }
-    print_row(u);
     free(u);
     return 0;
 
