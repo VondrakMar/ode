@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <raylib.h>
 
 #define WIDTH 50
 #define HEIGHT 10
@@ -27,7 +28,7 @@ void flushed_print(double* arr_to_print, int usl){
     system("clear");
     print_row(arr_to_print);
     fflush(stdout);
-    usleep(usl);
+    /* usleep(usl); */
 }
 
 void take_step(size_t Nx, double r, double* u){
@@ -40,23 +41,51 @@ void take_step(size_t Nx, double r, double* u){
     }
 }
 
-
+int double_to_color(double value, double minVal, double maxVal){
+    double norm = (value - minVal)/(maxVal - minVal);
+    return (int)round(norm*255.0);
+}
 
 int main(){
+    int n_of_zones = 50;
+    int size_of_square = 50;
+    // Raylib settings
+    InitWindow(n_of_zones*size_of_square, 200, "1D heat equation");
+    SetTargetFPS(60);
+    /*#################################*/
+    
     double L = 1.0;
-    size_t Nx = WIDTH;
+    size_t Nx = n_of_zones;
     double dx = L/Nx;
     double Nt = 50000;
     double dt = 0.01;
     double alpha = 0.01;
     double r = alpha* (dt/pow(dx,2.0));
-    double* u = (double*)malloc(WIDTH*sizeof(double));
+    double* u = (double*)malloc(n_of_zones*sizeof(double));
+    for (int tmp_u = 0; tmp_u < n_of_zones; tmp_u++){
+        u[tmp_u] = 0.2;
+    }
     u[0] = 0.7;
-    u[WIDTH-1] = 0.2;
-    for (size_t t_step = 0; t_step < Nt ; t_step++){
+    u[n_of_zones-1] = 0.2;
+
+    char str[100];
+
+    // Set up 1D boundary conditions
+    
+    int t_step  = 0;
+    while(!WindowShouldClose()){
         take_step(Nx,r,u);
         flushed_print(u, 10000);
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        for (int zone = 0; zone < n_of_zones ; zone++){
+            DrawRectangle(size_of_square*zone, 50, size_of_square, size_of_square, CLITERAL(Color){255,0,0,double_to_color(u[zone], u[n_of_zones-1],u[0])});
+            sprintf(str, "%f.2f", round(u[zone]));
+            DrawText(TextFormat("%f",str),size_of_square*(zone/2),25,2,SKYBLUE);
+        }
+        EndDrawing();
     }
+    CloseWindow();
     free(u);
     return 0;
 
